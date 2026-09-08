@@ -5,17 +5,8 @@
 
 namespace {
 
-// Hawkeye uses 3-bit RRPVs.
-//
-// Therefore:
-//     minimum RRPV = 0
-//     maximum RRPV = 7
-//
 constexpr int MAX_RRPV = 7;
 
-// Cache-friendly lines should never be aged to 7.
-//
-// When aging, Hawkeye increments values only if RRPV < 6.
 constexpr int MAX_FRIENDLY_RRPV = 6;
 
 } // namespace
