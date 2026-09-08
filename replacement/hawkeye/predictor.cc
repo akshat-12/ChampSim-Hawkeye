@@ -12,8 +12,7 @@ HawkeyePredictor::HawkeyePredictor(std::size_t num_entries,
     max_counter_ = (1 << counter_bits_) - 1;
 }
 
-void HawkeyePredictor::train(uint64_t pc, bool opt_hit)
-{
+void HawkeyePredictor::train(uint64_t pc, bool opt_hit) {
     const std::size_t idx = index(pc);
 
     if (opt_hit) {
@@ -27,8 +26,7 @@ void HawkeyePredictor::train(uint64_t pc, bool opt_hit)
     }
 }
 
-bool HawkeyePredictor::predict(uint64_t pc) const
-{
+bool HawkeyePredictor::predict(uint64_t pc) const {
     const std::size_t idx = index(pc);
 
     // The most valuable bit determines the prediction.
@@ -37,26 +35,11 @@ bool HawkeyePredictor::predict(uint64_t pc) const
     return (counters_[idx] & high_bit) != 0;
 }
 
-int HawkeyePredictor::get_counter(uint64_t pc) const
-{
+int HawkeyePredictor::get_counter(uint64_t pc) const {
     return counters_[index(pc)];
 }
 
-std::size_t HawkeyePredictor::index(uint64_t pc) const
-{
-    // 64-bit mixing function followed by table indexing.
-    //
-    // The paper describes the predictor as an 8K-entry table
-    // indexed by a hashed 13-bit PC.
-    uint64_t x = pc;
-
-    x ^= x >> 33;
-    x *= 0xff51afd7ed558ccdULL;
-
-    x ^= x >> 33;
-    x *= 0xc4ceb9fe1a85ec53ULL;
-
-    x ^= x >> 33;
-
-    return static_cast<std::size_t>(x % num_entries_);
+std::size_t HawkeyePredictor::index(uint64_t pc) const {
+    constexpr uint64_t pc_mask = (1ULL << 13) - 1;
+    return static_cast<std::size_t>((pc & pc_mask) % num_entries_);
 }
