@@ -7,39 +7,19 @@
 
 class HawkeyePredictor {
 public:
-    // num_entries:
-    //   Size of the PC-indexed predictor table.
-    //   The Hawkeye paper uses 8K entries.
-    //
-    // counter_bits:
-    //   Width of each saturating counter.
-    //   The paper uses 3-bit counters.
-    //
-    // The high-order bit of the counter determines the
-    // classification:
-    //
-    //   1 -> cache-friendly
-    //   0 -> cache-averse
-    HawkeyePredictor(std::size_t num_entries = 8192,
-                     int counter_bits = 3);
+    // num_entries: size of the PC-indexed table (paper: 8K entries)
+    // counter_bits: width of the saturating counter (paper: 3 bits, range
+    // [0, 2^counter_bits - 1])
+    HawkeyePredictor(std::size_t num_entries = 8192, int counter_bits = 3);
 
-    // Train the counter indexed by a hash of `pc`.
-    //
-    // OPT hit  -> increment counter
-    // OPT miss -> decrement counter
+    // Trains the counter indexed by a hash of `pc` per Section 3.3's
+    // update rule.
     void train(uint64_t pc, bool opt_hit);
 
     // Returns the predicted classification for `pc`.
-    //
-    // true  -> cache-friendly
-    // false -> cache-averse
     bool predict(uint64_t pc) const;
 
-    // Debug-only accessor.
-    //
-    // Returns the raw counter value in:
-    //
-    // [0, 2^counter_bits - 1]
+    // Debug-only accessor: raw counter value in [0, 2^counter_bits - 1].
     int get_counter(uint64_t pc) const;
 
 private:

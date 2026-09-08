@@ -1,4 +1,4 @@
-#include "optgen2.h"
+#include "optgen.h"
 
 OPTgen::OPTgen(std::size_t num_sets,
                std::size_t associativity,

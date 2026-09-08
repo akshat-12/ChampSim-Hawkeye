@@ -1,8 +1,6 @@
 #ifndef OPTGEN_H
 #define OPTGEN_H
 
-#include <cstddef>
-#include <cstdint>
 #include <unordered_map>
 #include <vector>
 
