@@ -8,6 +8,25 @@
 #include "rrip.h"
 
 struct hawkeye : public champsim::modules::replacement {
+    long NUM_SET;
+    long NUM_WAY;
+
+    // OPTgen state: one independent OPTgen history per cache set
+    OPTgen optgen;
+
+    // PC-indexed saturating-counter predictor
+    HawkeyePredictor predictor;
+
+    // RRPV state: rrpv[set][way]
+    std::vector<std::vector<int>> rrpv;
+
+    // Classification of each resident cache line
+    // classification[set][way]
+    std::vector<std::vector<Classification>> classification;
+
+public:
+    explicit hawkeye(CACHE* cache);
+    hawkeye(CACHE* cache, long sets, long ways);
     // TODO: instantiate different modules 
 
     // TODO: Add any new data structures or functions to connect each of
@@ -30,6 +49,5 @@ struct hawkeye : public champsim::modules::replacement {
                                 access_type type);
     void update_replacement_state(uint32_t triggering_cpu, long set, long way, champsim::address full_addr, champsim::address ip, champsim::address victim_addr,
                                 access_type type, uint8_t hit);
-
 };
 #endif

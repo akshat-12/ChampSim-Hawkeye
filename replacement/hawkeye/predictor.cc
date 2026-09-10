@@ -40,6 +40,7 @@ int HawkeyePredictor::get_counter(uint64_t pc) const {
 }
 
 std::size_t HawkeyePredictor::index(uint64_t pc) const {
-    constexpr uint64_t pc_mask = (1ULL << 13) - 1;
-    return static_cast<std::size_t>((pc & pc_mask) % num_entries_);
+    constexpr uint64_t index_mask = (1ULL << 13) - 1;
+    const uint64_t hashed = pc ^ (pc >> 12);
+    return static_cast<std::size_t>((hashed & index_mask) % num_entries_);
 }
