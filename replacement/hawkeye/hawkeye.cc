@@ -10,6 +10,7 @@
 #include "predictor.cc"
 #include "rrip.cc"
 
+#define MAXRRIP 7
 
 // ================================================================
 // Constructor
@@ -24,7 +25,7 @@ hawkeye::hawkeye(CACHE* cache, long sets, long ways)
       optgen(static_cast<std::size_t>(sets),
              static_cast<std::size_t>(ways)),
       predictor(),
-      rrpv(static_cast<std::size_t>(sets * ways), 0),
+      rrpv(static_cast<std::size_t>(sets * ways), MAXRRIP),
       classification(static_cast<std::size_t>(sets * ways),
                      Classification::CACHE_FRIENDLY) {}
 
@@ -36,18 +37,8 @@ long hawkeye::find_victim(
     champsim::address ip,
     champsim::address full_addr,
     access_type type) {
-    auto begin = std::next(
-        rrpv.begin(),
-        static_cast<std::size_t>(set * NUM_WAY));
 
-    auto end = std::next(begin, NUM_WAY);
-
-    // Hawkeye victim selection operates on one set at a time.
-    std::vector<int> set_rrpv(begin, end);
-
-    std::size_t victim = ::find_victim(set_rrpv);
-
-    return static_cast<long>(victim);
+    return static_cast<long>(::find_victim(rrpv[set]));
 }
 
 void hawkeye::replacement_cache_fill(
@@ -78,7 +69,7 @@ void hawkeye::replacement_cache_fill(
     // A newly inserted line is a miss, so apply the Hawkeye
     // insertion rule.
     update_rrpv(
-        rrpv_for_set(set),
+        rrpv[set],
         static_cast<std::size_t>(way),
         classification[index],
         /*is_hit=*/false);
@@ -137,14 +128,4 @@ void hawkeye::update_replacement_state(
             classification[index],
             /*is_hit=*/true);
     }
-}
-
-std::vector<int> hawkeye::rrpv_for_set(long set)
-{
-    const std::size_t begin =
-        static_cast<std::size_t>(set * NUM_WAY);
-
-    return std::vector<int>(
-        rrpv.begin() + begin,
-        rrpv.begin() + begin + NUM_WAY);
 }
