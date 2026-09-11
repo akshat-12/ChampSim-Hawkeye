@@ -47,6 +47,8 @@ bool OPTgen::access(std::size_t set_idx, uint64_t address) {
     auto it = last_pos.find(address);
 
     if (it == set.last_pos.end()) {
+
+        last_access_was_reuse_ = false;
         // No previous occurrence in the tracked history.
         history[current_pos] = address;
         valid[current_pos] = true;
@@ -57,6 +59,8 @@ bool OPTgen::access(std::size_t set_idx, uint64_t address) {
 
         return false;
     }
+
+    last_access_was_reuse_ = true;
 
     const std::size_t previous_pos = it->second;
     bool opt_hit = true;
@@ -98,4 +102,8 @@ std::size_t OPTgen::next(std::size_t pos) {
         pos = 0;
     }
     return pos;
+}
+
+bool OPTgen::last_access_was_reuse() const {
+    return last_access_was_reuse_;
 }

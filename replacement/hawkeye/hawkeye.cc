@@ -35,6 +35,7 @@ long hawkeye::find_victim(
     champsim::address ip,
     champsim::address full_addr,
     access_type type) {
+    // std::cout << "Incoming PC: " << std::hex << ip.to<uint64_t>() << std::endl;
 
     Classification cls;
 
@@ -104,7 +105,7 @@ void hawkeye::update_replacement_state(
             static_cast<std::size_t>(set),
             block_addr);
 
-    if (opt_hit) {
+    if (optgen.last_access_was_reuse()) {
         predictor.train(
             ip.to<uint64_t>(),
             opt_hit);

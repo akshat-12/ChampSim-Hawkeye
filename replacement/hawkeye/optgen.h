@@ -23,6 +23,8 @@ public:
     // Return the next position in the circular history.
     std::size_t next(std::size_t pos);
 
+    bool last_access_was_reuse() const;
+
 private:
     std::size_t num_sets_;
     std::size_t associativity_;
@@ -47,6 +49,8 @@ private:
 
     // Each cache set has an independent OPTgen state.
     std::vector<SetState> sets_;
+
+    bool last_access_was_reuse_ = false;
 
 };
 
