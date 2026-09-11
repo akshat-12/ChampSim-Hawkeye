@@ -2,6 +2,7 @@
 #ifndef HAWKEYE_H
 #define HAWKEYE_H
 #include <vector>
+#include "cache.h"
 #include "modules.h"
 #include "optgen.h"
 #include "predictor.h"
@@ -19,10 +20,6 @@ struct hawkeye : public champsim::modules::replacement {
 
     // RRPV state: rrpv[set][way]
     std::vector<std::vector<int>> rrpv;
-
-    // Classification of each resident cache line
-    // classification[set][way]
-    std::vector<std::vector<Classification>> classification;
 
 public:
     explicit hawkeye(CACHE* cache);

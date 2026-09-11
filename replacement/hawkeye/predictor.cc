@@ -7,7 +7,7 @@ HawkeyePredictor::HawkeyePredictor(std::size_t num_entries,
     : num_entries_(num_entries),
       counter_bits_(counter_bits),
       max_counter_(0),
-      counters_(num_entries, 0) {
+      counters_(num_entries, 4) {
 
     max_counter_ = (1 << counter_bits_) - 1;
 }
@@ -42,5 +42,5 @@ int HawkeyePredictor::get_counter(uint64_t pc) const {
 std::size_t HawkeyePredictor::index(uint64_t pc) const {
     constexpr uint64_t index_mask = (1ULL << 13) - 1;
     const uint64_t hashed = pc ^ (pc >> 12);
-    return static_cast<std::size_t>((hashed & index_mask) % num_entries_);
+    return static_cast<std::size_t>(hashed & index_mask);
 }

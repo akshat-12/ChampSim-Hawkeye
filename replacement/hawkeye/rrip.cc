@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <limits.h>
 
 namespace {
 

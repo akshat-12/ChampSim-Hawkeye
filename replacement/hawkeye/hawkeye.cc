@@ -5,10 +5,9 @@
 #include <cassert>
 #include <cstddef>
 #include <stdexcept>
+#include <iostream>
 
-#include "optgen.cc"
-#include "predictor.cc"
-#include "rrip.cc"
+#include "cache.h"
 
 #define MAXRRIP 7
 
@@ -25,9 +24,8 @@ hawkeye::hawkeye(CACHE* cache, long sets, long ways)
       optgen(static_cast<std::size_t>(sets),
              static_cast<std::size_t>(ways)),
       predictor(),
-      rrpv(static_cast<std::size_t>(sets * ways), MAXRRIP),
-      classification(static_cast<std::size_t>(sets * ways),
-                     Classification::CACHE_FRIENDLY) {}
+     rrpv(static_cast<std::size_t>(sets),
+         std::vector<int>(static_cast<std::size_t>(ways), MAXRRIP)) {}
 
 long hawkeye::find_victim(
     uint32_t triggering_cpu,
@@ -38,7 +36,24 @@ long hawkeye::find_victim(
     champsim::address full_addr,
     access_type type) {
 
-    return static_cast<long>(::find_victim(rrpv[set]));
+    Classification cls;
+
+    if (predictor.predict(ip.to<uint64_t>())) {
+        cls = Classification::CACHE_FRIENDLY;
+    } else {
+        cls = Classification::CACHE_AVERSE;
+    }
+
+    auto victim = static_cast<long>(::find_victim(rrpv[set]));
+
+    // A newly inserted line is a miss, so apply the Hawkeye
+    // insertion rule.
+    update_rrpv(
+        rrpv[set],
+        static_cast<std::size_t>(victim),
+        cls,
+        false /*is_hit=*/);
+    return victim;
 }
 
 void hawkeye::replacement_cache_fill(
@@ -49,30 +64,26 @@ void hawkeye::replacement_cache_fill(
     champsim::address ip,
     champsim::address victim_addr,
     access_type type) {
-    const std::size_t index =
-        static_cast<std::size_t>(set * NUM_WAY + way);
-
+    // std::cout << "Replacement PC: " << std::hex << ip.to<uint64_t>() << std::endl;
     // Query the PC-indexed Hawkeye predictor.
     //
     // predictor = true  -> cache-friendly
     // predictor = false -> cache-averse
-    const bool cache_friendly = predictor.predict(ip.to<uint64_t>());
+    // Classification cls;
 
-    if (cache_friendly) {
-        classification[index] =
-            Classification::CACHE_FRIENDLY;
-    } else {
-        classification[index] =
-            Classification::CACHE_AVERSE;
-    }
+    // if (predictor.predict(ip.to<uint64_t>())) {
+    //     cls = Classification::CACHE_FRIENDLY;
+    // } else {
+    //     cls = Classification::CACHE_AVERSE;
+    // }
 
-    // A newly inserted line is a miss, so apply the Hawkeye
-    // insertion rule.
-    update_rrpv(
-        rrpv[set],
-        static_cast<std::size_t>(way),
-        classification[index],
-        /*is_hit=*/false);
+    // // A newly inserted line is a miss, so apply the Hawkeye
+    // // insertion rule.
+    // update_rrpv(
+    //     rrpv[set],
+    //     static_cast<std::size_t>(way),
+    //     cls,
+    //     false /*is_hit=*/);
 }
 
 void hawkeye::update_replacement_state(
@@ -84,48 +95,27 @@ void hawkeye::update_replacement_state(
     champsim::address victim_addr,
     access_type type,
     uint8_t hit) {
-    // ------------------------------------------------------------
-    // 1. Run OPTgen for this access.
-    //
-    // OPTgen works independently for every cache set.
-    // ------------------------------------------------------------
+
+    uint64_t block_addr = (full_addr.to<uint64_t>() >> 6) << 6;
+    // std::cout << "Incoming PC: " << std::hex << ip.to<uint64_t>() << std::endl;
 
     const bool opt_hit =
         optgen.access(
             static_cast<std::size_t>(set),
-            full_addr.to<uint64_t>());
+            block_addr);
 
-    // ------------------------------------------------------------
-    // 2. Train the PC-indexed Hawkeye predictor.
-    //
-    // OPT hit  -> increment counter
-    // OPT miss -> decrement counter
-    // ------------------------------------------------------------
-
-    predictor.train(
-        ip.to<uint64_t>(),
-        opt_hit);
-
-
-    // ------------------------------------------------------------
-    // 3. Update RRPV.
-    //
-    // On a hit, use the classification that was assigned to the
-    // line when it was inserted.
-    //
-    // On a miss, RRPV will be initialized during cache fill,
-    // because that is where the new line's predictor classification
-    // is known.
-    // ------------------------------------------------------------
+    if (opt_hit) {
+        predictor.train(
+            ip.to<uint64_t>(),
+            opt_hit);
+    }
 
     if (hit) {
-        const std::size_t index =
-            static_cast<std::size_t>(set * NUM_WAY + way);
-
         update_rrpv(
-            rrpv_for_set(set),
+            rrpv[set],
             static_cast<std::size_t>(way),
-            classification[index],
-            /*is_hit=*/true);
+            predictor.predict(ip.to<uint64_t>()) ? Classification::CACHE_FRIENDLY
+                                        : Classification::CACHE_AVERSE,
+            true /* cache_hit */);
     }
 }
