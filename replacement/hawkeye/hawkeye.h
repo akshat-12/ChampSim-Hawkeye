@@ -21,6 +21,8 @@ struct hawkeye : public champsim::modules::replacement {
     // RRPV state: rrpv[set][way]
     std::vector<std::vector<int>> rrpv;
 
+    std::vector<std::vector<uint64_t>> cache_line_to_pc_mapping;
+
 public:
     explicit hawkeye(CACHE* cache);
     hawkeye(CACHE* cache, long sets, long ways);

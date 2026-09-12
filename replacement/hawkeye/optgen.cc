@@ -10,6 +10,7 @@ OPTgen::OPTgen(std::size_t num_sets,
     history_length_ = associativity * history_multiplier;
 
     sets_.resize(num_sets_);
+    last_access_was_reuse_.resize(num_sets_, false);
 
     // Initialize the vector of SetState objects for each cache set.
     for (auto& set : sets_) {
@@ -24,7 +25,7 @@ bool OPTgen::access(std::size_t set_idx, uint64_t address) {
 
     // Variables to be used for the current set (for code readability)
     std::vector<uint64_t>& history = set.history;
-    std::vector<std::uint8_t>& occupancy = set.occupancy;
+    std::vector<int>& occupancy = set.occupancy;
     std::vector<bool>& valid = set.valid;
     std::unordered_map<uint64_t, std::size_t>& last_pos = set.last_pos;
     const std::size_t current_pos = set.next_pos;
@@ -48,7 +49,7 @@ bool OPTgen::access(std::size_t set_idx, uint64_t address) {
 
     if (it == set.last_pos.end()) {
 
-        last_access_was_reuse_ = false;
+        last_access_was_reuse_[set_idx] = false;
         // No previous occurrence in the tracked history.
         history[current_pos] = address;
         valid[current_pos] = true;
@@ -60,7 +61,7 @@ bool OPTgen::access(std::size_t set_idx, uint64_t address) {
         return false;
     }
 
-    last_access_was_reuse_ = true;
+    last_access_was_reuse_[set_idx] = true;
 
     const std::size_t previous_pos = it->second;
     bool opt_hit = true;
@@ -104,6 +105,6 @@ std::size_t OPTgen::next(std::size_t pos) {
     return pos;
 }
 
-bool OPTgen::last_access_was_reuse() const {
-    return last_access_was_reuse_;
+bool OPTgen::last_access_was_reuse(std::size_t set_idx) const {
+    return last_access_was_reuse_[set_idx];
 }

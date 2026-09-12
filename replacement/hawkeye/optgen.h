@@ -23,7 +23,7 @@ public:
     // Return the next position in the circular history.
     std::size_t next(std::size_t pos);
 
-    bool last_access_was_reuse() const;
+    bool last_access_was_reuse(std::size_t set_idx) const;
 
 private:
     std::size_t num_sets_;
@@ -32,7 +32,7 @@ private:
 
     struct SetState {
         // Occupancy vector used by OPTgen.
-        std::vector<std::uint8_t> occupancy;
+        std::vector<int> occupancy;
 
         // Address stored at each history position.
         std::vector<uint64_t> history;
@@ -50,7 +50,7 @@ private:
     // Each cache set has an independent OPTgen state.
     std::vector<SetState> sets_;
 
-    bool last_access_was_reuse_ = false;
+    std::vector<bool> last_access_was_reuse_;
 
 };
 

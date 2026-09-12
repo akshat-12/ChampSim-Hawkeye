@@ -37,16 +37,15 @@ void update_rrpv(std::vector<int>& rrpv,
 
 std::size_t find_victim(std::vector<int>& rrpv)
 {
-    int max_rrpv = INT_MIN;
-    int max_rrpv_index = -1;
-    for (std::size_t way = 0; way < rrpv.size(); way++) {
-        if (rrpv[way] == MAX_RRPV) {
-            return way;
+    while (true) {
+        for (std::size_t way = 0; way < rrpv.size(); ++way) {
+            if (rrpv[way] == MAX_RRPV) {
+                return way;
+            }
         }
-        if (rrpv[way] > max_rrpv) {
-            max_rrpv = rrpv[way];
-            max_rrpv_index = way;
+
+        for (int& value : rrpv) {
+            ++value;
         }
     }
-    return static_cast<std::size_t>(max_rrpv_index);
 }

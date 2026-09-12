@@ -1,0 +1,30 @@
+Hawkeye algorithm for Champsim:
+
+Modules:
+OPTgen: exposes an access function that takes in block-aligned addr and set number, and returns if this access is an OPT hit. Stores 8 * Associativity length accesses. Any access who's previous access was more than this length away, is treated as a new block.
+Predictor: Exposes two functions: Train, and Predict. Maintains a vector of counters of length 8192, each being 3 bit long. Starts every counter at 4. Also a hash function which maps the PC to a vector index (0-8191)
+- Train takes in two variables, PC, and boolean which indicates if this access was opt_hit. If yes, increment the counter by 1 (if < 7). If no, decrement the counter by 1 (if > 0).
+- Predict takes in a PC, hashes it to counter index, extracts its first bit. Returns CACHE_FRIENDLY if first bit is 1, otherwise, CACHE_AVERSE.
+
+Hawkeye Replacement Policy:
+Uses 3 functions, update_replacement_state, find_victim, and replacement_cache_fill. update_replacement_state runs on every access. find_victim runs if there is a miss and there are no empty slots. replacement_cache_fill runs on every miss when the new line comes into the cache.
+Also, maintains a rrpv[set][ways], each with a 3 bit counter
+
+update_replacement_state:
+- Align to addr to the block.
+- Predict if this access is an OPT hit using optgen.access.
+- If this an opt_hit or an opt_miss where the block was seen previously, use the information to train the predictor (if block was reused).
+- If the access itself was a hit:
+    - If predictor.predict(pc) gives CACHE_FRIENDLY, set rrpv[set][way] to 0.
+    - Otherwise, set rrpv[set][way] to 7.
+
+find_victim:
+- Loop over all the ways of the given set, if any rrpv[set][way] == 7, select that as the victim way.
+- Otherwise, use the max rrpv in the given set as the victim.
+- Detrain the predictor for the PC stored with the victim block in its last access.
+
+replacement_cache_fill:
+- Use predictor.predict to predict if incoming line is CACHE_FRIENDLY or CACHE_AVERSE.
+- If CACHE_AVERSE, set its rrpv to 7.
+- If CACHE_FRIENDLY, set its rrpv to 0. Increment all other rrpv which are < 6 by 1, given that they max reach 6.
+- Store the mapping of set,way->PC for detraining purposes
