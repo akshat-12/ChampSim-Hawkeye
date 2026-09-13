@@ -26,8 +26,7 @@ hawkeye::hawkeye(CACHE* cache, long sets, long ways)
       predictor(),
      rrpv(static_cast<std::size_t>(sets),
          std::vector<int>(static_cast<std::size_t>(ways), MAXRRIP)),
-      cache_line_to_pc_mapping(static_cast<std::size_t>(sets),
-                              std::vector<uint64_t>(static_cast<std::size_t>(ways), 0))  {}
+      cache_line_to_pc_mapping(static_cast<std::size_t>(sets))  {}
 
 long hawkeye::find_victim(
     uint32_t triggering_cpu,
@@ -41,12 +40,10 @@ long hawkeye::find_victim(
 
     auto victim = static_cast<long>(::find_victim(rrpv[set]));
 
-    auto victim_pc = cache_line_to_pc_mapping[set][victim];
-
-    // Detrain the predictor with the victim's PC, since it was not reused.
-    predictor.train(
-        victim_pc,
-        false);
+    // // Detrain the predictor with the victim's PC, since it was not reused.
+    // predictor.train(
+    //     victim_pc,
+    //     false);
 
     return victim;
 }
@@ -66,7 +63,6 @@ void hawkeye::replacement_cache_fill(
     // predictor = false -> cache-averse
     if (type == access_type::WRITE) {
         rrpv[set][way] = MAXRRIP;
-        cache_line_to_pc_mapping[set][way] = ip.to<uint64_t>();
         return;
     }
     Classification cls;
@@ -77,7 +73,6 @@ void hawkeye::replacement_cache_fill(
         cls = Classification::CACHE_AVERSE;
     }
 
-    cache_line_to_pc_mapping[set][way] = ip.to<uint64_t>();
 
     // A newly inserted line is a miss, so apply the Hawkeye
     // insertion rule.
@@ -110,10 +105,14 @@ void hawkeye::update_replacement_state(
             block_addr);
 
     if (optgen.last_access_was_reuse(static_cast<std::size_t>(set))) {
-        predictor.train(
-            ip.to<uint64_t>(),
-            opt_hit);
+        if (cache_line_to_pc_mapping[set].find(block_addr) != cache_line_to_pc_mapping[set].end()) {
+            uint64_t victim_pc = cache_line_to_pc_mapping[set][block_addr];
+            predictor.train(
+                victim_pc,
+                opt_hit);
+        }
     }
+    cache_line_to_pc_mapping[set][block_addr] = ip.to<uint64_t>();
 
     if (hit) {
         update_rrpv(
