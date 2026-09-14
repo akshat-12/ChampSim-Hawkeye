@@ -27,7 +27,6 @@ hawkeye::hawkeye(CACHE* cache, long sets, long ways)
      rrpv(static_cast<std::size_t>(sets),
          std::vector<int>(static_cast<std::size_t>(ways), MAXRRIP)),
       cache_line_to_pc_mapping(static_cast<std::size_t>(sets))  {
-    std::cout << "Hawkeye initialized with " << NUM_SET << " sets and " << NUM_WAY << " ways." << std::endl;
       }
 
 long hawkeye::find_victim(
@@ -63,10 +62,10 @@ void hawkeye::replacement_cache_fill(
     //
     // predictor = true  -> cache-friendly
     // predictor = false -> cache-averse
-    // if (type == access_type::WRITE) {
-    //     rrpv[set][way] = MAXRRIP;
-    //     return;
-    // }
+    if (type == access_type::WRITE) {
+        rrpv[set][way] = MAXRRIP;
+        return;
+    }
     Classification cls;
 
     if (predictor.predict(ip.to<uint64_t>())) {
@@ -99,9 +98,9 @@ void hawkeye::update_replacement_state(
     // if (!hit) {
     //     std::cout << "Miss for PC: " << std::hex << ip.to<uint64_t>() << std::endl;
     // }
-    // if (type == access_type::WRITE) {
-    //     return;
-    // }
+    if (type == access_type::WRITE) {
+        return;
+    }
 
     const bool opt_hit =
         optgen.access(

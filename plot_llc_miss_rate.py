@@ -63,7 +63,7 @@ def plot_results(results):
     labels = [f"{sets}, {associativity}" for sets, associativity in configurations]
     positions = range(len(configurations))
 
-    figure, axis = plt.subplots(figsize=(8, 5))
+    figure, axis = plt.subplots(figsize=(8, 6))
     axis.plot(
         positions,
         [results[configuration]["lru"] for configuration in configurations],
@@ -85,7 +85,34 @@ def plot_results(results):
     axis.set_ylim(bottom=0)
     axis.grid(axis="y", alpha=0.3)
     axis.legend()
-    figure.tight_layout()
+    table_data = [
+        [
+            f"{configuration[0]}, {configuration[1]}",
+            f"{results[configuration]['lru'] * 100:.2f}%",
+            f"{results[configuration]['hawkeye'] * 100:.2f}%",
+        ]
+        for configuration in configurations
+    ]
+    table = axis.table(
+        cellText=table_data,
+        colLabels=["Configuration", "LRU miss rate", "Hawkeye miss rate"],
+        cellLoc="center",
+        colWidths=[0.28, 0.36, 0.36],
+        bbox=[0, -0.64, 1, 0.4],
+    )
+    for (row, column), cell in table.get_celld().items():
+        cell.set_edgecolor("#d0d7de")
+        cell.set_linewidth(0.7)
+        cell.set_height(0.09)
+        if row == 0:
+            cell.set_facecolor("#2f6f9f")
+            cell.get_text().set_color("white")
+            cell.get_text().set_weight("bold")
+        else:
+            cell.set_facecolor("#f1f5f9" if row % 2 else "white")
+    table.auto_set_font_size(False)
+    table.set_fontsize(9)
+    figure.subplots_adjust(bottom=0.44)
     return figure
 
 

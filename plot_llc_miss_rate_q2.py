@@ -65,12 +65,12 @@ def collect_results(results_dir):
             raise ValueError(f"{benchmark}: LRU miss rate is zero")
         improvements[benchmark] = (lru_rate - rates["hawkeye"]) / lru_rate * 100
 
-    return dict(sorted(improvements.items()))
+    return dict(sorted(improvements.items())), dict(sorted(results.items()))
 
 
-def plot_results(improvements):
+def plot_results(improvements, miss_rates):
     """Create a bar chart of Hawkeye's miss-rate improvement over LRU."""
-    figure, axis = plt.subplots(figsize=(8, 5))
+    figure, axis = plt.subplots(figsize=(8, 6))
     bars = axis.bar(list(improvements), list(improvements.values()), color="#2f6f9f")
     axis.bar_label(bars, fmt="%.2f%%", padding=3)
     axis.axhline(0, color="black", linewidth=0.8)
@@ -78,7 +78,34 @@ def plot_results(improvements):
     axis.set_ylabel("Hawkeye improvement over LRU (%)")
     axis.set_title("LLC Miss-Rate Improvement of Hawkeye over LRU")
     axis.grid(axis="y", alpha=0.3)
-    figure.tight_layout()
+    table_data = [
+        [
+            benchmark,
+            f"{miss_rates[benchmark]['lru'] * 100:.2f}%",
+            f"{miss_rates[benchmark]['hawkeye'] * 100:.2f}%",
+        ]
+        for benchmark in improvements
+    ]
+    table = axis.table(
+        cellText=table_data,
+        colLabels=["Benchmark", "LRU miss rate", "Hawkeye miss rate"],
+        cellLoc="center",
+        colWidths=[0.42, 0.29, 0.29],
+        bbox=[0, -0.64, 1, 0.4],
+    )
+    for (row, column), cell in table.get_celld().items():
+        cell.set_edgecolor("#d0d7de")
+        cell.set_linewidth(0.7)
+        cell.set_height(0.09)
+        if row == 0:
+            cell.set_facecolor("#2f6f9f")
+            cell.get_text().set_color("white")
+            cell.get_text().set_weight("bold")
+        else:
+            cell.set_facecolor("#f1f5f9" if row % 2 else "white")
+    table.auto_set_font_size(False)
+    table.set_fontsize(9)
+    figure.subplots_adjust(bottom=0.44)
     return figure
 
 
@@ -97,12 +124,12 @@ def main():
     )
     args = parser.parse_args()
 
-    improvements = collect_results(args.results_dir)
+    improvements, miss_rates = collect_results(args.results_dir)
     print("Benchmark improvement (%):")
     for benchmark, improvement in improvements.items():
         print(f"{benchmark}: {improvement:.2f}%")
 
-    figure = plot_results(improvements)
+    figure = plot_results(improvements, miss_rates)
     if args.output:
         figure.savefig(args.output, dpi=200)
     else:

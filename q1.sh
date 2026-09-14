@@ -7,9 +7,9 @@ TRACE_FILE="$ROOT_DIR/traces/456.hmmer-191B.champsimtrace.xz"
 RESULTS_DIR="$ROOT_DIR/Q1"
 
 # Add or remove sweep values here.
-SETS=(8192 4096 2048)
-WAYS=(4 8 16)
-REPLACEMENTS=(lru)
+SETS=(2048 4096 8192)
+WAYS=(16 8 4)
+REPLACEMENTS=(hawkeye lru)
 
 if [[ ${#SETS[@]} -ne ${#WAYS[@]} ]]; then
     printf 'SETS and WAYS must contain the same number of entries\n' >&2
