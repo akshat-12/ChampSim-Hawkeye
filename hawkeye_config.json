@@ -1,5 +1,7 @@
 {
-    "sets": 2048,
-    "ways": 16,
-    "LLC": { "replacement": "hawkeye" }
+    "LLC": {
+        "replacement": "lru",
+        "sets": 2048,
+        "ways": 16
+    }
 }

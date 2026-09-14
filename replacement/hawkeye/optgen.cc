@@ -1,4 +1,5 @@
 #include "optgen.h"
+#include <iostream>
 
 OPTgen::OPTgen(std::size_t num_sets,
                std::size_t associativity,
@@ -18,6 +19,7 @@ OPTgen::OPTgen(std::size_t num_sets,
         set.history.resize(history_length_);
         set.valid.resize(history_length_, false);
     }
+    std::cout << "OPTgen initialized with " << num_sets_ << " sets, associativity " << associativity_ << ", and history length " << history_length_ << "." << std::endl;
 }
 
 bool OPTgen::access(std::size_t set_idx, uint64_t address) {
