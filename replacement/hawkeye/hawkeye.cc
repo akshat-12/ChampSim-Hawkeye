@@ -11,10 +11,6 @@
 
 #define MAXRRIP 7
 
-// ================================================================
-// Constructor
-// ================================================================
-
 hawkeye::hawkeye(CACHE* cache): hawkeye(cache, cache->NUM_SET, cache->NUM_WAY){}
 
 hawkeye::hawkeye(CACHE* cache, long sets, long ways)
@@ -37,14 +33,8 @@ long hawkeye::find_victim(
     champsim::address ip,
     champsim::address full_addr,
     access_type type) {
-    // std::cout << "Finding victim for PC: " << std::hex << ip.to<uint64_t>() << std::endl;
 
     auto victim = static_cast<long>(::find_victim(rrpv[set]));
-
-    // // Detrain the predictor with the victim's PC, since it was not reused.
-    // predictor.train(
-    //     victim_pc,
-    //     false);
 
     return victim;
 }
@@ -57,15 +47,9 @@ void hawkeye::replacement_cache_fill(
     champsim::address ip,
     champsim::address victim_addr,
     access_type type) {
-    // std::cout << "Replacement PC: " << std::hex << ip.to<uint64_t>() << std::endl;
-    // Query the PC-indexed Hawkeye predictor.
-    //
+
     // predictor = true  -> cache-friendly
     // predictor = false -> cache-averse
-    if (type == access_type::WRITE) {
-        rrpv[set][way] = MAXRRIP;
-        return;
-    }
     Classification cls;
 
     if (predictor.predict(ip.to<uint64_t>())) {
@@ -95,12 +79,7 @@ void hawkeye::update_replacement_state(
     uint8_t hit) {
 
     uint64_t block_addr = (full_addr.to<uint64_t>() >> 6) << 6;
-    // if (!hit) {
-    //     std::cout << "Miss for PC: " << std::hex << ip.to<uint64_t>() << std::endl;
-    // }
-    if (type == access_type::WRITE) {
-        return;
-    }
+
 
     const bool opt_hit =
         optgen.access(
